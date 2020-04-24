@@ -40,7 +40,12 @@ class ReactivePlannerController(PlannerControllerBase):
         # If the route is not viable any more, call
         # self.controller.stopDrivingToCurrentGoal()
 
-        pass
+        for waypoint in self.currentPlannedPath.waypoints:
+            coordinates = waypoint.coords
+            if (self.occupancyGrid.getCell(coordinates[0], coordinates[1])==1):
+                self.controller.stopDrivingToCurrentGoal()
+                print("Collision detected at:", coordinates)
+                print("New Path Generated.")
 
     # Choose the first aisle the robot will initially drive down.
     # This is based on the prior.
@@ -69,9 +74,31 @@ class ReactivePlannerController(PlannerControllerBase):
         if self.aisleToDriveDown is None:
             self.aisleToDriveDown = aisle
 
+        print("Aisle:", self.aisleToDriveDown.name)
         # Implement your method here to construct a path which will drive the robot
         # from the start to the goal via the aisle.
-        pathToGoalFound = self.planner.search(startCellCoords, goalCellCoords)    
+
+        # Path through chosen aisle
+        if self.aisleToDriveDown.value == 0:
+            print("Through A")
+            aisleCoords = (28, 21)
+        elif self.aisleToDriveDown.value == 1:
+            print("Through B")
+            aisleCoords = (42, 21)
+        elif self.aisleToDriveDown.value == 2:
+            print("Through C")
+            aisleCoords = (57, 21)
+        elif self.aisleToDriveDown.value == 3:
+            print("Through D")
+            aisleCoords = (72, 21)
+        elif self.aisleToDriveDown.value == 4:
+            print("Through E")
+            aisleCoords = (87, 21)
+        if self.planner.search(startCellCoords, aisleCoords):
+            currentPlannedPath = self.planner.extractPathEndingAtCoord(aisleCoords)
+        pathToGoalFound = self.planner.search(aisleCoords, goalCellCoords) 
+        currentPlannedPath.addToEnd(self.planner.extractPathToGoal())
+    
 
         # If we can't reach the goal, give up and return
         if pathToGoalFound is False:
@@ -80,7 +107,7 @@ class ReactivePlannerController(PlannerControllerBase):
             return None
 
         # Extract the path
-        currentPlannedPath = self.planner.extractPathToGoal()
+        # currentPlannedPath = self.planner.extractPathToGoal()
 
         return currentPlannedPath
 
@@ -89,6 +116,10 @@ class ReactivePlannerController(PlannerControllerBase):
     # Note that driving down an aisle is like introducing an intermediate waypoint.
 
     def driveToGoal(self, goal):
+
+        print("Goal", goal)
+        print("Goal x", goal.x)
+        print("Goal y", goal.y)
 
         # Get the goal coordinate in cells
         goalCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((goal.x,goal.y))

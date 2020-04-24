@@ -222,6 +222,7 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
             
         # Start at the goal and find the parent. Find the cost associated with the parent
         cell = pathEndCell.parent
+        print("Cell", cell)
         path.travelCost = self.computeLStageAdditiveCost(pathEndCell.parent, pathEndCell)
         
         # Iterate back through and extract each parent in turn and add
@@ -257,11 +258,12 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
     # path.
     def extractPathEndingAtCoord(self, endCellCoord):
         endCell = self.searchGrid.getCellFromCoords(endCellCoord)
-        self.extractPathEndingAtCell(endCell, 'red')
+        return self.extractPathEndingAtCell(endCell, 'red')
+        
+
 
     # Extract the path between the start and goal.
     def extractPathToGoal(self):
         path = self.extractPathEndingAtCell(self.goal, 'yellow')
-       
         return path
             
