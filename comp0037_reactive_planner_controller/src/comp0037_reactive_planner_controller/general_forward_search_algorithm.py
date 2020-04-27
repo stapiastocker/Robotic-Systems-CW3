@@ -257,7 +257,7 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
     # path.
     def extractPathEndingAtCoord(self, endCellCoord):
         endCell = self.searchGrid.getCellFromCoords(endCellCoord)
-        return self.extractPathEndingAtCell(endCell, 'red')
+        self.extractPathEndingAtCell(endCell, 'red')
         
 
 

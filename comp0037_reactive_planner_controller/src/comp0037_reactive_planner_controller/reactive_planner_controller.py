@@ -56,13 +56,13 @@ class ReactivePlannerController(PlannerControllerBase):
 
     # Choose the subdquent aisle the robot will drive down
     def chooseAisle(self, startCellCoords, goalCellCoords):
-        return Aisle.E
+        return Aisle.C
 
     # Return whether the robot should wait for the obstacle to clear or not.
     def shouldWaitUntilTheObstacleClears(self, startCellCoords, goalCellCoords, waitingTime = 2):
         # Cost of waiting
         T = waitingTime # needs to be changed to equation with lambda_b
-        Lw = 2
+        Lw = 2.0
         costOfWaiting = T * Lw
         rospy.loginfo("Waiting Cost: {}".format(costOfWaiting))
 
@@ -89,6 +89,14 @@ class ReactivePlannerController(PlannerControllerBase):
         rospy.loginfo("New Path Travel Cost: {}".format(newPathCost))
 
         rospy.loginfo("Path Cost Difference: {}".format(newPathCost - pathCost))
+
+        # Maximum value of lambda_b
+        lambda_b_max = Lw / (newPathCost - pathCost)
+        rospy.loginfo("Lamba_b Max: {}".format(lambda_b_max))
+
+        # Which relates to a mean waiting time of
+        meanWaitingTime = 1.0/lambda_b_max
+        rospy.loginfo("Giving a mean waiting time of: {}".format(meanWaitingTime))
 
         if costOfWaiting < newPathCost - pathCost:
             rospy.loginfo("Action: Wait")
@@ -119,31 +127,36 @@ class ReactivePlannerController(PlannerControllerBase):
         elif self.aisleToDriveDown != aisle:
             self.aisleToDriveDown = aisle
 
-        print("Aisle:", aisle.name)
         # Implement your method here to construct a path which will drive the robot
         # from the start to the goal via the aisle.
 
         # Path through chosen aisle
         if self.aisleToDriveDown.value == 0:
             print("Drive down A")
-            aisleCoords = (28, 10)
+            aisleCoords = (28, 12)
         elif self.aisleToDriveDown.value == 1:
             print("Drive down B")
-            aisleCoords = (42, 10)
+            aisleCoords = (42, 12)
         elif self.aisleToDriveDown.value == 2:
             print("Drive down C")
-            aisleCoords = (57, 10)
+            aisleCoords = (57, 12)
         elif self.aisleToDriveDown.value == 3:
             print("Drive down D")
-            aisleCoords = (72, 10)
+            aisleCoords = (72, 12)
         elif self.aisleToDriveDown.value == 4:
             print("Drive down E")
-            aisleCoords = (87, 10)
-        if self.planner.search(startCellCoords, aisleCoords):
-            currentPlannedPath = self.planner.extractPathEndingAtCoord(aisleCoords)
-        pathToGoalFound = self.planner.search(aisleCoords, goalCellCoords) 
-    
+            aisleCoords = (87, 12)
 
+        pathToAisle = self.planner.search(startCellCoords, aisleCoords)
+        # If we can't reach the goal, give up and return
+        if pathToAisle is False:
+            rospy.logwarn("Could not find a path to the aisle at (%d, %d)", \
+                            aisleCoords[0], aisleCoords[1])
+            return None
+
+        currentPlannedPath = self.planner.extractPathToGoal()
+
+        pathToGoalFound = self.planner.search(aisleCoords, goalCellCoords) 
         # If we can't reach the goal, give up and return
         if pathToGoalFound is False:
             rospy.logwarn("Could not find a path to the goal at (%d, %d)", \
@@ -196,6 +209,9 @@ class ReactivePlannerController(PlannerControllerBase):
             # If we couldn't find a path, give up
             if self.currentPlannedPath is None:
                 return False
+
+            self.planner.searchGridDrawer.drawPathGraphicsWithCustomColour(self.currentPlannedPath, 'yellow')
+            self.planner.searchGridDrawer.waitForKeyPress()
 
             # Drive along the path towards the goal. This returns True
             # if the goal was successfully reached. The controller
