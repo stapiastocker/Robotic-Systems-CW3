@@ -52,11 +52,28 @@ class ReactivePlannerController(PlannerControllerBase):
     # Choose the first aisle the robot will initially drive down.
     # This is based on the prior.
     def chooseInitialAisle(self, startCellCoords, goalCellCoords):
-        return Aisle.B
+        p_b = 0.8
+        L_w = 2.0
+        lambdaB_max = 101.0 * p_b * L_w/102.0
+        smallestLength = float('inf')
+        chosenAisle = Aisle.B
+
+        for aisle in Aisle:
+            path = self.planPathToGoalViaAisle(startCellCoords, goalCellCoords, aisle)
+            length = path.numberOfWaypoints
+            if aisle == Aisle.B:
+                length += p_b*L_w/lambdaB_max
+            print(f"Aisle: {aisle}, cost {length}")
+            if length < smallestLength:
+                chosenAisle = aisle
+                smallestLength = length
+
+        return chosenAisle
+
 
     # Choose the subdquent aisle the robot will drive down
     def chooseAisle(self, startCellCoords, goalCellCoords):
-        return Aisle.C
+        return Aisle.A
 
     # Return whether the robot should wait for the obstacle to clear or not.
     def shouldWaitUntilTheObstacleClears(self, startCellCoords, goalCellCoords, waitingTime = 2):
