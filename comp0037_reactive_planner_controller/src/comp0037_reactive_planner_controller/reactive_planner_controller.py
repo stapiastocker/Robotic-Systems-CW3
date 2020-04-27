@@ -54,7 +54,7 @@ class ReactivePlannerController(PlannerControllerBase):
     def chooseInitialAisle(self, startCellCoords, goalCellCoords):
         p_b = 0.8
         L_w = 2.0
-        lambdaB_max = 101.0 * p_b * L_w/102.0
+        lambdaB_max = p_b * L_w/(102.0 - 101.0)
         smallestLength = float('inf')
         chosenAisle = Aisle.B
 
@@ -63,8 +63,11 @@ class ReactivePlannerController(PlannerControllerBase):
             length = path.numberOfWaypoints
             if aisle == Aisle.B:
                 length += p_b*L_w/lambdaB_max
-            print(f"Aisle: {aisle}, cost {length}")
-            if length < smallestLength:
+            print('XXXXXXXXXXX')
+            print(aisle)
+            print(length)
+            print('XXXXXXXXXXX')
+            if length <= smallestLength:
                 chosenAisle = aisle
                 smallestLength = length
 
